@@ -1,6 +1,6 @@
 # MediaRemote Adapter
 
-Notch Triage bundles `MediaRemoteAdapter` to read the system Now Playing
+BoringNotch-Next bundles `MediaRemoteAdapter` to read the system Now Playing
 session on macOS versions where direct MediaRemote access is restricted.
 
 - Upstream: <https://github.com/ungive/mediaremote-adapter>
@@ -8,5 +8,5 @@ session on macOS versions where direct MediaRemote access is restricted.
 - License: BSD 3-Clause (`MediaRemoteAdapter-LICENSE.txt`)
 - Architectures: `arm64`, `x86_64`
 
-The framework is embedded but not linked into Notch Triage. It is loaded by
+The framework is embedded but not linked into BoringNotch-Next. It is loaded by
 the system `/usr/bin/perl` process through the upstream adapter script.

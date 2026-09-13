@@ -65,7 +65,7 @@ final class TrashService {
         guard permissionStatus == noErr else {
             let message: String
             if permissionStatus == OSStatus(errAEEventNotPermitted) {
-                message = "请在“系统设置 → 隐私与安全性 → 自动化”中允许 Notch Triage 控制 Finder，然后重试。"
+                message = "请在“系统设置 → 隐私与安全性 → 自动化”中允许 BoringNotch-Next 控制 Finder，然后重试。"
             } else {
                 message = "Finder 自动化权限不可用（错误 \(permissionStatus)）。"
             }
@@ -144,7 +144,7 @@ final class TrashService {
         let detail = error[NSAppleScript.errorMessage] as? String
             ?? error.description
         let message = code == Int(errAEEventNotPermitted)
-            ? "Finder 拒绝了清空请求。请在“系统设置 → 隐私与安全性 → 自动化”中允许 Notch Triage 控制 Finder。"
+            ? "Finder 拒绝了清空请求。请在“系统设置 → 隐私与安全性 → 自动化”中允许 BoringNotch-Next 控制 Finder。"
             : "Finder 未能清空废纸篓：\(detail)"
         return .failure(message)
     }

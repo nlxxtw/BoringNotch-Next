@@ -41,7 +41,7 @@ struct SettingsRootView: View {
     var body: some View {
         HStack(spacing: 0) {
             List(selection: selectionBinding) {
-                Section("Notch Triage") {
+                Section("BoringNotch-Next") {
                     sidebarItem("外观", symbol: "rectangle.on.rectangle", destination: .appearance)
                     sidebarItem("行为", symbol: "slider.horizontal.3", destination: .behavior)
                     sidebarItem("权限", symbol: "lock.shield", destination: .permissions)
@@ -112,7 +112,7 @@ struct SettingsRootView: View {
     }
 
     private func localizedSettingsWindowTitle(for destination: Destination) -> String {
-        "\(model.localized("Notch Triage 设置")) — \(model.localized(destination.title))"
+        "\(model.localized("BoringNotch-Next 设置")) — \(model.localized(destination.title))"
     }
 
     @ViewBuilder
@@ -153,7 +153,7 @@ struct SettingsRootView: View {
                 HStack(spacing: 12) {
                     SettingsRowLabel(
                         title: "界面语言",
-                        subtitle: "选择 Notch Triage 的显示语言。",
+                        subtitle: "选择 BoringNotch-Next 的显示语言。",
                         symbol: "globe"
                     )
 
@@ -562,7 +562,7 @@ struct SettingsRootView: View {
             SettingsGroup(title: "登录项") {
                 HStack(alignment: .center, spacing: 12) {
                     Toggle(
-                        "登录时启动 Notch Triage",
+                        "登录时启动 BoringNotch-Next",
                         isOn: Binding(
                             get: { model.launchAtLoginEnabled },
                             set: { model.setLaunchAtLoginEnabled($0) }
@@ -570,10 +570,10 @@ struct SettingsRootView: View {
                     )
                     .labelsHidden()
                     .controlSize(.regular)
-                    .accessibilityLabel("登录时启动 Notch Triage")
+                    .accessibilityLabel("登录时启动 BoringNotch-Next")
 
                     SettingsRowLabel(
-                        title: "登录时启动 Notch Triage",
+                        title: "登录时启动 BoringNotch-Next",
                         subtitle: model.launchAtLoginStatusDescription,
                         symbol: "power"
                     )
@@ -587,7 +587,7 @@ struct SettingsRootView: View {
                     } label: {
                         SettingsRowLabel(
                             title: "批准登录项",
-                            subtitle: "系统设置需要确认 Notch Triage 的登录项。",
+                            subtitle: "系统设置需要确认 BoringNotch-Next 的登录项。",
                             symbol: "gear"
                         )
                     }
@@ -715,7 +715,7 @@ struct SettingsRootView: View {
     private var permissionsPage: some View {
         SettingsPage(
             title: "权限",
-            subtitle: "Notch Triage 只在对应功能需要时使用系统权限。",
+            subtitle: "BoringNotch-Next 只在对应功能需要时使用系统权限。",
             symbol: "lock.shield"
         ) {
             SettingsGroup(title: "辅助功能") {
@@ -773,7 +773,7 @@ struct SettingsRootView: View {
             SettingsGroup(title: "当前版本") {
                 HStack {
                     SettingsRowLabel(
-                        title: "Notch Triage",
+                        title: "BoringNotch-Next",
                         subtitle: updateStatusDescription,
                         symbol: "checkmark.seal"
                     )
@@ -848,7 +848,7 @@ struct SettingsRootView: View {
             subtitle: "原生、轻量、常驻的 macOS 刘海工具。",
             symbol: "info.circle"
         ) {
-            SettingsGroup(title: "Notch Triage") {
+            SettingsGroup(title: "BoringNotch-Next") {
                 HStack(spacing: 14) {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
@@ -856,7 +856,7 @@ struct SettingsRootView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Notch Triage")
+                        Text("BoringNotch-Next")
                             .font(.title3.weight(.semibold))
                         Text(model.appLanguage == .english
                              ? "Version v\(model.currentVersion)"
@@ -894,7 +894,7 @@ struct SettingsRootView: View {
                 } label: {
                     Label("复制诊断报告", systemImage: "doc.on.doc")
                 }
-                Button("退出 Notch Triage", role: .destructive) {
+                Button("退出 BoringNotch-Next", role: .destructive) {
                     model.quitApplication()
                 }
             }

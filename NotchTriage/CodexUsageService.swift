@@ -110,7 +110,7 @@ final class CodexUsageService {
                 "params": [
                     "clientInfo": [
                         "name": "notch_triage",
-                        "title": "Notch Triage",
+                        "title": "BoringNotch-Next",
                         "version": Bundle.main.object(
                             forInfoDictionaryKey: "CFBundleShortVersionString"
                         ) as? String ?? "0.0.0"

@@ -243,13 +243,13 @@ extension AppModel {
             : summary
         let message = abbreviatedNotes.isEmpty
             ? (appLanguage == .english
-                ? "After confirmation, the update will be downloaded, verified, installed, and Notch Triage will restart."
-                : "确认后将下载、验证并安装更新，然后重启 Notch Triage。")
+                ? "After confirmation, the update will be downloaded, verified, installed, and BoringNotch-Next will restart."
+                : "确认后将下载、验证并安装更新，然后重启 BoringNotch-Next。")
             : abbreviatedNotes
                 + "\n\n"
                 + (appLanguage == .english
-                    ? "After confirmation, the update will be downloaded, verified, installed, and Notch Triage will restart."
-                    : "确认后将下载、验证并安装更新，然后重启 Notch Triage。")
+                    ? "After confirmation, the update will be downloaded, verified, installed, and BoringNotch-Next will restart."
+                    : "确认后将下载、验证并安装更新，然后重启 BoringNotch-Next。")
         let prompt = AppUpdatePrompt(
             title: appLanguage == .english
                 ? "Found \(release.displayVersion)"

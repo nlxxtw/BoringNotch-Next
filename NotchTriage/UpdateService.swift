@@ -13,7 +13,7 @@ actor UpdateService {
         var request = URLRequest(url: Self.latestReleaseURL)
         request.timeoutInterval = 20
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("NotchTriage-Updater", forHTTPHeaderField: "User-Agent")
+        request.setValue("BoringNotch-Next-Updater", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let response = response as? HTTPURLResponse,
@@ -62,7 +62,7 @@ actor UpdateService {
 
         var request = URLRequest(url: release.downloadURL)
         request.timeoutInterval = 120
-        request.setValue("NotchTriage-Updater", forHTTPHeaderField: "User-Agent")
+        request.setValue("BoringNotch-Next-Updater", forHTTPHeaderField: "User-Agent")
 
         let downloader = ProgressiveUpdateDownloader(
             request: request,
@@ -501,7 +501,7 @@ enum UpdateServiceError: LocalizedError {
         case .missingInstaller:
             return "最新 Release 中没有 macOS DMG 安装包"
         case .untrustedDownloadLocation:
-            return "安装包下载地址不属于 Notch Triage 官方仓库"
+            return "安装包下载地址不属于 BoringNotch-Next 官方仓库"
         case .downloadFailed:
             return "安装包下载失败"
         case .missingDigest:

@@ -333,7 +333,7 @@ private final class SystemChargeLimitController {
         )
         let selector = NSSelectorFromString("initWithClientName:")
         clientClass = cls
-        client = initialize(rawValue as AnyObject, selector, "Notch Triage")
+        client = initialize(rawValue as AnyObject, selector, "BoringNotch-Next")
     }
 
     func status() -> ChargeLimitSnapshot {

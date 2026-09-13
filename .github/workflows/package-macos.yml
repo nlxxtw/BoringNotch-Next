@@ -121,7 +121,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: NotchTriage-macos-${{ github.sha }}
+          name: BoringNotch-Next-macos-${{ github.sha }}
           path: |
             dist/*.zip
             dist/*.dmg

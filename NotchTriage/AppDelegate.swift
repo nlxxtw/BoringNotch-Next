@@ -5,7 +5,7 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let persistentUtilityReason =
-        "Notch Triage remains available while its panel is collapsed"
+        "BoringNotch-Next remains available while its panel is collapsed"
     let model = AppModel()
     private var panelController: NotchPanelController?
     private var settingsWindowController: SettingsWindowController?
@@ -101,7 +101,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         super.init()
 
         titleSink.window = window
-        titleSink.update(for: "\(model.localized("Notch Triage 设置")) — \(model.localized("外观"))")
+        titleSink.update(for: "\(model.localized("BoringNotch-Next 设置")) — \(model.localized("外观"))")
         window.titleVisibility = .visible
         window.isReleasedWhenClosed = false
         window.isMovableByWindowBackground = true

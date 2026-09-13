@@ -88,7 +88,7 @@ struct NotchRootView: View {
                 Button(role: .destructive) {
                     model.quitApplication()
                 } label: {
-                    Label("退出 Notch Triage", systemImage: "power")
+                    Label("退出 BoringNotch-Next", systemImage: "power")
                 }
             }
             .background {
@@ -99,7 +99,7 @@ struct NotchRootView: View {
             .offset(x: compactAlignmentOffset)
             .accessibilityLabel(
                 model.localized(
-                    model.isExpanded ? "收起 Notch Triage" : "展开 Notch Triage"
+                    model.isExpanded ? "收起 BoringNotch-Next" : "展开 BoringNotch-Next"
                 )
             )
             .accessibilityAddTraits(.isButton)
@@ -2371,7 +2371,7 @@ private struct ExpandedPanel: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(LocalizedStringKey(title))
                         .font(.system(size: 15, weight: .semibold))
-                    Text(model.updateStatus.activeUpdateVersion.map { "Notch Triage v\($0)" } ?? "Notch Triage")
+                    Text(model.updateStatus.activeUpdateVersion.map { "BoringNotch-Next v\($0)" } ?? "BoringNotch-Next")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -2539,7 +2539,7 @@ private struct UpdateAvailableOverlay: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("有新的版本可用")
                             .font(.system(size: 17, weight: .semibold))
-                        Text("Notch Triage \(release.displayVersion)")
+                        Text("BoringNotch-Next \(release.displayVersion)")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }

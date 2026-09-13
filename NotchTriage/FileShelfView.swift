@@ -43,7 +43,7 @@ struct FileShelfView: View {
             }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("只会清除 Notch Triage 中的引用，不会删除或移动原文件。")
+            Text("只会清除 BoringNotch-Next 中的引用，不会删除或移动原文件。")
         }
     }
 
@@ -125,7 +125,7 @@ struct FileShelfView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         } else {
             Label(
-                "退出 Notch Triage 后自动清空引用",
+                "退出 BoringNotch-Next 后自动清空引用",
                 systemImage: "clock.arrow.circlepath"
             )
             .font(.caption2)

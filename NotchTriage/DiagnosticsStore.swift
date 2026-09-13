@@ -83,7 +83,7 @@ final class DiagnosticsStore: ObservableObject {
     ) -> String {
         let formatter = ISO8601DateFormatter()
         var lines = [
-            "Notch Triage v\(version)",
+            "BoringNotch-Next v\(version)",
             "Generated: \(formatter.string(from: Date()))",
             "Background refresh: \(isPaused ? "paused" : "active")",
             "Launch at login: \(launchAtLoginDescription)",

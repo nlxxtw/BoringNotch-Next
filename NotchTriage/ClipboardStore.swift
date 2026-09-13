@@ -920,7 +920,7 @@ actor ClipboardStore {
             return nil
         }
         return applicationSupport
-            .appendingPathComponent("Notch Triage", isDirectory: true)
+            .appendingPathComponent("BoringNotch-Next", isDirectory: true)
             .appendingPathComponent("clipboard-history.json")
     }
 }

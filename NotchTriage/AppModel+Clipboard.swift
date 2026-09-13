@@ -161,7 +161,7 @@ extension AppModel {
                 ? "首次读取新复制内容时，macOS 可能询问是否允许。"
                 : "启用后，首次读取时 macOS 可能询问是否允许。")
         case .alwaysAllow:
-            replaceClipboardAccessNotice("macOS 已允许 Notch Triage 读取剪贴板。")
+            replaceClipboardAccessNotice("macOS 已允许 BoringNotch-Next 读取剪贴板。")
         case .alwaysDeny:
             replaceClipboardAccessNotice("macOS 当前禁止读取；请在系统设置的隐私与安全中调整。")
             clipboardMonitor?.stop()

@@ -822,7 +822,7 @@ final class AppModel: ObservableObject {
     func presentAccessibilityRepairPrompt() {
         updatePrompt = AppUpdatePrompt(
             title: "修复辅助功能授权？",
-            message: "macOS 可能仍在使用旧构建的授权记录。继续后只会重置 Notch Triage 的辅助功能权限，并立即打开系统设置让你重新开启；其他 App 的权限不会变化。",
+            message: "macOS 可能仍在使用旧构建的授权记录。继续后只会重置 BoringNotch-Next 的辅助功能权限，并立即打开系统设置让你重新开启；其他 App 的权限不会变化。",
             release: nil,
             recovery: .resetAccessibility
         )

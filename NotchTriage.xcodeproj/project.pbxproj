@@ -345,12 +345,12 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Notch Triage Debug";
+				INFOPLIST_KEY_CFBundleDisplayName = "BoringNotch-Next Debug";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Notch Triage uses player and Finder automation to read media status and manage the Trash.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "BoringNotch-Next uses player and Finder automation to read media status and manage the Trash.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026.";
-				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Notch Triage needs Screen Recording to freeze the display for region capture, annotation, and scrolling long screenshots.";
+				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "BoringNotch-Next needs Screen Recording to freeze the display for region capture, annotation, and scrolling long screenshots.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -379,11 +379,12 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "BoringNotch-Next";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Notch Triage uses player and Finder automation to read media status and manage the Trash.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "BoringNotch-Next uses player and Finder automation to read media status and manage the Trash.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026.";
-				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "Notch Triage needs Screen Recording to freeze the display for region capture, annotation, and scrolling long screenshots.";
+				INFOPLIST_KEY_NSScreenCaptureUsageDescription = "BoringNotch-Next needs Screen Recording to freeze the display for region capture, annotation, and scrolling long screenshots.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

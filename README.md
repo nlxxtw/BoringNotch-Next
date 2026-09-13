@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="./docs/assets/notch-triage-logo.png" alt="Notch Triage Logo" width="132" height="132">
-  <h1>Notch Triage</h1>
+  <img src="./docs/assets/notch-triage-logo.png" alt="BoringNotch-Next Logo" width="132" height="132">
+  <h1>BoringNotch-Next</h1>
   <p><strong>把 MacBook 刘海变成真正有用的系统状态与效率中心。</strong></p>
   <p>原生、轻量、常驻的 macOS 刘海工具，集中呈现系统状态，并提供文件暂存与隐私优先的剪贴板历史。</p>
 
@@ -40,7 +40,7 @@
 ## 产品预览
 
 <p align="center">
-  <img src="./docs/assets/compact-notch.png" alt="Notch Triage 默认刘海状态" width="560">
+  <img src="./docs/assets/compact-notch.png" alt="BoringNotch-Next 默认刘海状态" width="560">
   <br>
   <sub><strong>默认状态：自定义显示内容在实体刘海两侧保持镜像、紧凑显示</strong></sub>
 </p>
@@ -101,12 +101,12 @@
 1. 前往 [Releases](https://github.com/nlxxtw/BoringNotch-Next/releases/latest) 下载最新发布包。
 2. 将 `NotchTriage.app` 移入“应用程序”文件夹并启动。
 
-> 如果“应用程序”中同时存在 `NotchTriage.app` 与旧的 `Notch Triage.app`，请先退出两者，再用最新版 `NotchTriage.app` 覆盖并移除旧的空格命名副本，避免同一 Bundle ID 启动两个实例。
+> 如果“应用程序”中同时存在 `NotchTriage.app` 与旧的 `BoringNotch-Next.app`，请先退出两者，再用最新版 `NotchTriage.app` 覆盖并移除旧的空格命名副本，避免同一 Bundle ID 启动两个实例。
 
 3. 根据需要授予辅助功能、Finder 自动化、剪贴板访问或登录项权限。
 4. 点击刘海区域打开面板；剪贴板历史保持默认关闭，只有点击“启用剪贴板历史”后才开始监控新内容。
 
-> Notch Triage 当前定位为 GitHub / 官网分发的 macOS 工具，不面向 Mac App Store。作者博客：[bg.19492035.xyz](https://bg.19492035.xyz/)
+> BoringNotch-Next 当前定位为 GitHub / 官网分发的 macOS 工具，不面向 Mac App Store。作者博客：[bg.19492035.xyz](https://bg.19492035.xyz/)
 
 ### 权限说明
 
@@ -117,7 +117,7 @@
 | 登录项 | 使用系统 `SMAppService` 实现开机启动 | 可选 |
 | 剪贴板访问 | 仅在用户启用 Clipboard History 后读取新复制的白名单内容 | 可选，默认关闭 |
 
-应用不会安装 root helper。请求辅助功能权限前，面板会先完整收起，再打开系统设置；“修复权限”也只会重置 Notch Triage 自身的授权记录。
+应用不会安装 root helper。请求辅助功能权限前，面板会先完整收起，再打开系统设置；“修复权限”也只会重置 BoringNotch-Next 自身的授权记录。
 
 ## 兼容性
 
@@ -204,7 +204,7 @@ DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
 10. 检查音量、显示亮度与 AirPods 连接 HUD。
 11. 在诊断页确认六项服务状态与最近检查时间更新，并测试复制诊断报告。
 12. 启用“开机时启动”；如果系统要求批准，检查登录项设置入口。
-13. 使用“设置与更新 → 退出 Notch Triage”正常结束应用。
+13. 使用“设置与更新 → 退出 BoringNotch-Next”正常结束应用。
 14. 从 Finder 和至少两个第三方 App 拖入/拖出单个与多个文件，确认取消、失败和超限后面板不会卡在拖放状态，且原文件不受影响。
 15. 在默认关闭状态确认 Clipboard History 不读取内容；启用后验证文本、图片和文件 URL、系统访问提示、重新复制、自写抑制、锁屏暂停、三种保留期限及“清空历史不清系统剪贴板”。
 
@@ -231,6 +231,6 @@ DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
 ---
 
 <p align="center">
-  <strong>Notch Triage</strong><br>
+  <strong>BoringNotch-Next</strong><br>
   <sub>让原本占据空间的刘海，成为抬眼可见的效率中心。</sub>
 </p>

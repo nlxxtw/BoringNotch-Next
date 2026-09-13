@@ -361,7 +361,7 @@ private enum ClipboardConfirmation: Equatable {
         case .disable:
             "关闭后立即停止监控。无论选择哪一项，都不会更改当前系统剪贴板。"
         case .clear:
-            "只删除 Notch Triage 保存的历史，不会清空当前系统剪贴板。"
+            "只删除 BoringNotch-Next 保存的历史，不会清空当前系统剪贴板。"
         }
     }
 

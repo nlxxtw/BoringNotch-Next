@@ -24,7 +24,7 @@ final class LaunchAtLoginService {
                 isRequested: true,
                 requiresApproval: true,
                 description: "等待系统批准",
-                health: .warning("请在系统设置的登录项中批准 Notch Triage")
+                health: .warning("请在系统设置的登录项中批准 BoringNotch-Next")
             )
         case .notRegistered:
             return Snapshot(

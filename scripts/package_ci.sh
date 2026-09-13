@@ -200,7 +200,7 @@ lipo "$EXECUTABLE_PATH" -verify_arch arm64
 printf 'Architectures: %s\n' "$(lipo "$EXECUTABLE_PATH" -archs)"
 printf 'App bundle size: %s\n' "$(du -sh "$APP_SOURCE" | awk '{print $1}')"
 
-readonly ARTIFACT_STEM="NotchTriage-${bundle_version}-b${bundle_build}-macOS-arm64"
+readonly ARTIFACT_STEM="BoringNotch-Next-${bundle_version}-b${bundle_build}-macOS-arm64"
 readonly APP_DEST="$DIST_DIR/NotchTriage.app"
 readonly ZIP_PATH="$DIST_DIR/${ARTIFACT_STEM}.zip"
 readonly DMG_PATH="$DIST_DIR/${ARTIFACT_STEM}.dmg"
@@ -216,7 +216,7 @@ set +e
 ditto --norsrc --noextattr "$APP_SOURCE" "$STAGING_DIR/NotchTriage.app"
 ln -sf /Applications "$STAGING_DIR/Applications"
 hdiutil create \
-  -volname "NotchTriage ${bundle_version}" \
+  -volname "BoringNotch-Next ${bundle_version}" \
   -srcfolder "$STAGING_DIR" \
   -format ULMO \
   -imagekey zlib-level=9 \
@@ -225,7 +225,7 @@ DMG_STATUS=$?
 if [[ "$DMG_STATUS" -ne 0 ]]; then
   # Fallback to classic compressed UDZO if ULMO unavailable.
   hdiutil create \
-    -volname "NotchTriage ${bundle_version}" \
+    -volname "BoringNotch-Next ${bundle_version}" \
     -srcfolder "$STAGING_DIR" \
     -format UDZO \
     -imagekey zlib-level=9 \
