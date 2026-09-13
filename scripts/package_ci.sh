@@ -75,6 +75,23 @@ mkdir -p "$STAGING_DIR"
 printf 'Xcode: '; "$XCODEBUILD" -version | tr '\n' ' '; printf '\n'
 "$XCODEBUILD" -list -project "$PROJECT_DIR/NotchTriage.xcodeproj" || true
 
+# Windows checkouts often store framework symlinks as plain text stubs (git 100644).
+# Recreate real symlinks so Xcode can find Info.plist inside the bundle.
+repair_media_remote_framework() {
+  local fw="$PROJECT_DIR/Vendor/MediaRemoteAdapter/MediaRemoteAdapter.framework"
+  [[ -d "$fw/Versions/A" ]] || fail "missing MediaRemoteAdapter.framework Versions/A"
+  (
+    cd "$fw"
+    rm -f Versions/Current Headers Resources MediaRemoteAdapter
+    ln -s A Versions/Current
+    ln -s Versions/Current/Headers Headers
+    ln -s Versions/Current/Resources Resources
+    ln -s Versions/Current/MediaRemoteAdapter MediaRemoteAdapter
+  )
+  printf 'Repaired MediaRemoteAdapter.framework symlinks for CI.\n'
+}
+repair_media_remote_framework
+
 # Icon Composer (.icon) can crash actool on some CI Xcodes. Move it aside and
 # keep ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon so Assets.xcassets/AppIcon.appiconset
 # still ships a Finder/install icon.
