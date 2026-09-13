@@ -871,6 +871,18 @@ struct SettingsRootView: View {
                 }
             }
 
+            SettingsGroup(title: "链接") {
+                Link(destination: URL(string: "https://bg.19492035.xyz/")!) {
+                    Label("作者博客", systemImage: "globe")
+                }
+                Link(destination: URL(string: "https://github.com/nlxxtw/BoringNotch-Next")!) {
+                    Label("GitHub 仓库", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+                Link(destination: URL(string: "https://github.com/nlxxtw/BoringNotch-Next/releases")!) {
+                    Label("下载与更新", systemImage: "arrow.down.app")
+                }
+            }
+
             SettingsGroup(title: "快捷操作") {
                 Button {
                     model.refreshDiagnostics()

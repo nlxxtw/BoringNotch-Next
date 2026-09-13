@@ -33,7 +33,7 @@
 | [boring.notch](https://github.com/TheBoredTeam/boring.notch) | 刘海媒体 / 歌词等交互灵感与参考实现 |
 | [Notch Triage](https://github.com/0Hyacinth0/Notch-Triage) | 本仓库主体工程来源（系统状态、文件架、剪贴板等） |
 
-当前仓库：[nlxxtw/BoringNotch-Next](https://github.com/nlxxtw/BoringNotch-Next)
+当前仓库：[nlxxtw/BoringNotch-Next](https://github.com/nlxxtw/BoringNotch-Next) · 作者博客：[bg.19492035.xyz](https://bg.19492035.xyz/)
 
 ---
 
@@ -98,7 +98,7 @@
 
 ## 安装与首次运行
 
-1. 前往 [Releases](https://github.com/0Hyacinth0/Notch-Triage/releases/latest) 下载最新发布包。
+1. 前往 [Releases](https://github.com/nlxxtw/BoringNotch-Next/releases/latest) 下载最新发布包。
 2. 将 `NotchTriage.app` 移入“应用程序”文件夹并启动。
 
 > 如果“应用程序”中同时存在 `NotchTriage.app` 与旧的 `Notch Triage.app`，请先退出两者，再用最新版 `NotchTriage.app` 覆盖并移除旧的空格命名副本，避免同一 Bundle ID 启动两个实例。
@@ -106,7 +106,7 @@
 3. 根据需要授予辅助功能、Finder 自动化、剪贴板访问或登录项权限。
 4. 点击刘海区域打开面板；剪贴板历史保持默认关闭，只有点击“启用剪贴板历史”后才开始监控新内容。
 
-> Notch Triage 当前定位为 GitHub / 官网分发的 macOS 工具，不面向 Mac App Store。
+> Notch Triage 当前定位为 GitHub / 官网分发的 macOS 工具，不面向 Mac App Store。作者博客：[bg.19492035.xyz](https://bg.19492035.xyz/)
 
 ### 权限说明
 
@@ -221,6 +221,7 @@ DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
 
 ## 项目链接
 
+- [作者博客](https://bg.19492035.xyz/) — 主页与说明
 - [Releases](https://github.com/nlxxtw/BoringNotch-Next/releases) — 下载正式版本
 - [Issues](https://github.com/nlxxtw/BoringNotch-Next/issues) — 报告问题与提出建议
 - [Source](https://github.com/nlxxtw/BoringNotch-Next) — 浏览源代码

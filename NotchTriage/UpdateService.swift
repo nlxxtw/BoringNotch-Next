@@ -4,9 +4,10 @@ import Foundation
 
 actor UpdateService {
     private static let latestReleaseURL = URL(
-        string: "https://api.github.com/repos/0Hyacinth0/Notch-Triage/releases/latest"
+        string: "https://api.github.com/repos/nlxxtw/BoringNotch-Next/releases/latest"
     )!
     private static let expectedBundleIdentifier = "com.hyacinth.notchtriage"
+    private static let trustedReleaseDownloadPath = "/nlxxtw/BoringNotch-Next/releases/download/"
 
     func latestRelease() async throws -> AppRelease {
         var request = URLRequest(url: Self.latestReleaseURL)
@@ -29,9 +30,7 @@ actor UpdateService {
         }
 
         guard asset.downloadURL.host?.lowercased() == "github.com",
-              asset.downloadURL.path.contains(
-                "/0Hyacinth0/Notch-Triage/releases/download/"
-              ) else {
+              asset.downloadURL.path.contains(Self.trustedReleaseDownloadPath) else {
             throw UpdateServiceError.untrustedDownloadLocation
         }
 
