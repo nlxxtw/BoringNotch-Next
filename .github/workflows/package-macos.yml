@@ -1,0 +1,130 @@
+name: Package macOS
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: package-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Build DMG / ZIP
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Select Xcode
+        run: |
+          set -euxo pipefail
+          # 26.4.1 is known-good for Icon Composer .icon; 26.5 had an actool crash.
+          # Prefer 26.4.1, then newest 26.x, then default Xcode.app.
+          for candidate in \
+            /Applications/Xcode_26.4.1.app \
+            /Applications/Xcode_26.4.app \
+            /Applications/Xcode_26.6.app \
+            /Applications/Xcode_26.5.app \
+            /Applications/Xcode.app
+          do
+            if [[ -d "$candidate/Contents/Developer" ]]; then
+              sudo xcode-select -s "$candidate/Contents/Developer"
+              break
+            fi
+          done
+          xcode-select -p
+          xcodebuild -version
+          sw_vers
+          xcrun --show-sdk-version --sdk macosx
+          ls /Applications | grep -i xcode || true
+
+      - name: Inject private lyrics API config
+        env:
+          MUSIC_DL_BASE_URL: ${{ secrets.MUSIC_DL_BASE_URL }}
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          url = (os.environ.get("MUSIC_DL_BASE_URL") or "").strip()
+          # Escape for a Swift string literal.
+          literal = "nil" if not url else '"' + url.replace("\\", "\\\\").replace('"', '\\"') + '"'
+          Path("NotchTriage/LyricsAPIConfig.swift").write_text(
+              "import Foundation\n\n"
+              "enum LyricsAPIConfig {\n"
+              f"    static let musicDLBaseURLString: String? = {literal}\n\n"
+              "    static var musicDLBaseURL: URL? {\n"
+              "        guard let raw = musicDLBaseURLString?\n"
+              "            .trimmingCharacters(in: .whitespacesAndNewlines),\n"
+              "              !raw.isEmpty,\n"
+              "              let url = URL(string: raw) else {\n"
+              "            return nil\n"
+              "        }\n"
+              "        return url\n"
+              "    }\n"
+              "}\n",
+              encoding="utf-8",
+          )
+          print("lyrics config:", "injected" if url else "empty (LRCLIB only)")
+          PY
+
+      - name: Package (ad-hoc signed)
+        env:
+          # Skip Icon Composer .icon (actool crash on some runners); AppIcon.appiconset still packs.
+          SKIP_APP_ICON: "1"
+        run: |
+          set -euxo pipefail
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("scripts/package_ci.sh")
+          path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n"))
+          PY
+          chmod +x scripts/package_ci.sh
+          bash scripts/package_ci.sh
+
+      - name: Show failure log tail
+        if: failure()
+        run: |
+          for f in dist/package.log dist/xcodebuild.log dist/build-info.txt; do
+            if [[ -f "$f" ]]; then
+              echo "===== $f ====="
+              tail -n 160 "$f"
+            fi
+          done
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-failure-logs-${{ github.sha }}
+          path: |
+            dist/package.log
+            dist/xcodebuild.log
+            dist/build-info.txt
+            dist/**
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NotchTriage-macos-${{ github.sha }}
+          path: |
+            dist/*.zip
+            dist/*.dmg
+            dist/build-info.txt
+          if-no-files-found: error
+          retention-days: 14

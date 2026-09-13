@@ -1,0 +1,21 @@
+import Foundation
+
+enum LyricsAPIConfig {
+    /// Private music-dl base URL (no trailing slash).
+    /// Leave `nil` to skip music-dl and use LRCLIB only.
+    ///
+    /// Local: copy to `LyricsAPIConfig.swift` and fill in your URL
+    /// (that file is gitignored).
+    /// CI: set GitHub Actions secret `MUSIC_DL_BASE_URL`.
+    static let musicDLBaseURLString: String? = nil
+
+    static var musicDLBaseURL: URL? {
+        guard let raw = musicDLBaseURLString?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty,
+              let url = URL(string: raw) else {
+            return nil
+        }
+        return url
+    }
+}
