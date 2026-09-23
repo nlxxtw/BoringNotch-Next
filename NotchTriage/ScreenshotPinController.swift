@@ -65,7 +65,8 @@ private final class ScreenshotPinPanel: NSPanel {
         imageView.layer?.masksToBounds = true
         imageView.layer?.borderWidth = 1
         imageView.layer?.borderColor = NSColor.white.withAlphaComponent(0.35).cgColor
-        imageView.layer?.contentsScale = NSScreen.main?.backingScaleFactor ?? 2
+        // Match the bitmap's native Retina scale — not always NSScreen.main.
+        imageView.layer?.contentsScale = Self.bitmapScale(for: image)
         imageView.autoresizingMask = [.width, .height]
         container.addSubview(imageView)
 
@@ -83,7 +84,10 @@ private final class ScreenshotPinPanel: NSPanel {
 
         contentView = container
 
-        if let screen = NSScreen.main {
+        let host = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
+            ?? NSScreen.screens.first(where: { $0.displayID == CGMainDisplayID() })
+            ?? NSScreen.main
+        if let screen = host {
             let frame = screen.visibleFrame
             setFrameOrigin(
                 NSPoint(
@@ -115,5 +119,13 @@ private final class ScreenshotPinPanel: NSPanel {
             width: max(160, point.width * scale) + 8,
             height: max(120, point.height * scale) + 8
         )
+    }
+
+    private static func bitmapScale(for image: NSImage) -> CGFloat {
+        if let rep = image.representations.compactMap({ $0 as? NSBitmapImageRep }).first,
+           rep.size.width > 0 {
+            return max(1, CGFloat(rep.pixelsWide) / rep.size.width)
+        }
+        return ScreenshotExport.scale(forDisplayID: nil)
     }
 }

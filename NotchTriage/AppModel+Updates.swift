@@ -30,7 +30,7 @@ extension AppModel {
     func handleSettingsUpdateAction() {
         guard !updateStatus.isBusy else { return }
         if let availableUpdate {
-            dismissUpdatePrompt()
+            clearUpdatePromptForInstall()
             installUpdate(availableUpdate, context: .settings)
         } else {
             dismissUpdatePrompt()
@@ -41,10 +41,6 @@ extension AppModel {
     func handleUpdateMenuAction() {
         guard !updateStatus.isBusy else { return }
         if let availableUpdate {
-            UserDefaults.standard.set(
-                availableUpdate.version,
-                forKey: PreferenceKey.lastPromptedVersion
-            )
             presentUpdatePrompt(for: availableUpdate)
         } else {
             checkForUpdates(context: .panel)
@@ -70,16 +66,11 @@ extension AppModel {
                 if isNewerVersion(release.version, than: currentVersion) {
                     availableUpdate = release
                     updateStatus = .available(release.version)
-                    if context.isManualCheck {
-                        UserDefaults.standard.set(
-                            release.version,
-                            forKey: PreferenceKey.lastPromptedVersion
-                        )
-                    }
-                    if context.presentsAvailableReleaseInPanel {
-                        presentUpdatePrompt(for: release)
-                    } else if context == .automatic {
+                    // Forced update: always surface until the user installs.
+                    if context == .automatic {
                         presentAutomaticUpdatePromptIfNeeded(for: release)
+                    } else if context.presentsAvailableReleaseInPanel {
+                        presentUpdatePrompt(for: release)
                     }
                 } else {
                     availableUpdate = nil
@@ -117,10 +108,10 @@ extension AppModel {
         guard !updateStatus.isBusy else { return }
         let currentAppURL = Bundle.main.bundleURL.standardizedFileURL
         guard isInstalledApplication(currentAppURL) else {
-            dismissUpdatePrompt()
+            clearUpdatePromptForInstall()
             updatePrompt = AppUpdatePrompt(
                 title: "无法自动安装",
-                message: "请先将 NotchTriage.app 移到“应用程序”文件夹，再从那里运行并检查更新。",
+                message: "请先将应用移到“应用程序”文件夹，再从那里运行并检查更新。",
                 release: nil
             )
             return
@@ -206,7 +197,7 @@ extension AppModel {
         case .idle:
             return .loading("等待自动检查")
         case .checking:
-            return .loading("正在检查 GitHub Release")
+            return .loading("正在检查更新")
         case .available(let version):
             return .warning("发现可安装版本 v\(version)")
         case .downloading(let version):
@@ -221,11 +212,7 @@ extension AppModel {
     }
 
     private func presentAutomaticUpdatePromptIfNeeded(for release: AppRelease) {
-        let defaults = UserDefaults.standard
-        guard defaults.string(forKey: PreferenceKey.lastPromptedVersion)
-                != release.version else { return }
-        defaults.set(release.version, forKey: PreferenceKey.lastPromptedVersion)
-
+        // Forced update: re-prompt every launch/check until installed.
         withAnimation(motion(NotchDesign.Motion.panelOpen)) {
             sendPanelEvent(
                 .automaticUpdateWorkspaceRequested(
@@ -241,19 +228,16 @@ extension AppModel {
         let abbreviatedNotes = summary.count > 320
             ? String(summary.prefix(320)) + "…"
             : summary
+        let footer = appLanguage == .english
+            ? "This update is required. Install to continue using BoringNotch-Next."
+            : "此更新为强制更新，请安装后继续使用 BoringNotch-Next。"
         let message = abbreviatedNotes.isEmpty
-            ? (appLanguage == .english
-                ? "After confirmation, the update will be downloaded, verified, installed, and BoringNotch-Next will restart."
-                : "确认后将下载、验证并安装更新，然后重启 BoringNotch-Next。")
-            : abbreviatedNotes
-                + "\n\n"
-                + (appLanguage == .english
-                    ? "After confirmation, the update will be downloaded, verified, installed, and BoringNotch-Next will restart."
-                    : "确认后将下载、验证并安装更新，然后重启 BoringNotch-Next。")
+            ? footer
+            : abbreviatedNotes + "\n\n" + footer
         let prompt = AppUpdatePrompt(
             title: appLanguage == .english
-                ? "Found \(release.displayVersion)"
-                : "发现 \(release.displayVersion)",
+                ? "Update required · \(release.displayVersion)"
+                : "需要更新 · \(release.displayVersion)",
             message: message,
             release: release
         )
@@ -261,16 +245,22 @@ extension AppModel {
         sendPanelEvent(.releaseUpdatePromptPresented(id: prompt.id))
     }
 
+    /// Soft dismiss — ignored while a mandatory release prompt is showing.
     func dismissUpdatePrompt() {
+        guard updatePrompt?.release == nil else { return }
+        clearUpdatePromptForInstall()
+    }
+
+    func installPresentedUpdate(_ release: AppRelease) {
+        clearUpdatePromptForInstall()
+        installUpdate(release)
+    }
+
+    private func clearUpdatePromptForInstall() {
         if case .releaseUpdatePrompt(let id) = panelState.presentationOverride {
             sendPanelEvent(.releaseUpdatePromptDismissed(id: id))
         }
         updatePrompt = nil
-    }
-
-    func installPresentedUpdate(_ release: AppRelease) {
-        dismissUpdatePrompt()
-        installUpdate(release)
     }
 
     private func isNewerVersion(_ candidate: String, than current: String) -> Bool {

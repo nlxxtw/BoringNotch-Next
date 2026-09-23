@@ -106,6 +106,14 @@ final class ScreenshotOverlayController: NSObject {
         if visible { panel?.orderFrontRegardless() } else { panel?.orderOut(nil) }
     }
 
+    var containsGlobalMouse: Bool {
+        screenFrame.contains(NSEvent.mouseLocation)
+    }
+
+    func makeKey() {
+        panel?.makeKeyAndOrderFront(nil)
+    }
+
     /// Capture the live desktop region (overlay hidden so it is not in the shot).
     func finalizeSelectionForEdit() {
         guard state.selectionDisplayID == displayID,
@@ -118,8 +126,9 @@ final class ScreenshotOverlayController: NSObject {
         captureTask = Task { @MainActor in
             setOverlayVisible(false)
             state.onLongShotWillStart?()
-            // Let the desktop composite settle after our panels disappear.
-            try? await Task.sleep(nanoseconds: 40_000_000)
+            // Yield so orderOut lands in the compositor, then brief settle (40ms was often short).
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 80_000_000)
             defer {
                 state.onLongShotDidEnd?()
                 setOverlayVisible(true)
@@ -132,6 +141,7 @@ final class ScreenshotOverlayController: NSObject {
                 )
                 guard !Task.isCancelled else { return }
                 state.replacementCrop = image
+                state.captureScale = ScreenshotExport.scale(for: image, pointSize: viewSelection.size)
                 if state.phase != .editing {
                     state.annotations = []
                 }
@@ -143,6 +153,7 @@ final class ScreenshotOverlayController: NSObject {
             } catch {
                 guard !Task.isCancelled else { return }
                 state.replacementCrop = nil
+                state.captureScale = nil
                 state.phase = .selecting
                 state.statusMessage = (error as? LocalizedError)?.errorDescription
                     ?? error.localizedDescription
@@ -251,10 +262,8 @@ final class ScreenshotOverlayController: NSObject {
     }
 
     func compositedImage() -> NSImage? {
-        guard let cg = compositedCGImage(),
-              let sel = state.selection else { return nil }
-        let scale = ScreenshotExport.scale(for: cg, pointSize: sel.size)
-        return ScreenshotExport.pasteboardImage(from: cg, scale: scale)
+        guard let cg = compositedCGImage() else { return nil }
+        return ScreenshotExport.pasteboardImage(from: cg, scale: state.resolvedScale(for: cg))
     }
 
     func viewRectToGlobal(_ sel: CGRect) -> CGRect {
@@ -271,12 +280,14 @@ final class ScreenshotOverlayController: NSObject {
         state.longShotBusy = true
         state.longShotFrameCount = 1
         state.longShotPreview = nil
-        state.statusMessage = "请手动滚动页面，完成后点「完成拼接」"
+        state.statusMessage = "请先点击选区内窗口，再手动滚动；完成后点「完成拼接」"
         hideChrome()
         state.onLongShotWillStart?()
         showLongShotControls(selection: sel)
 
         let region = viewRectToGlobal(sel)
+        let previewScale = state.captureScale
+            ?? ScreenshotExport.scale(forDisplayID: displayID)
         longShotTask?.cancel()
         longShotTask = Task { @MainActor in
             defer {
@@ -295,14 +306,13 @@ final class ScreenshotOverlayController: NSObject {
             do {
                 let result = try await longCapturer.capture(region: region) { [weak self] progress in
                     guard let self else { return }
-                    let img = ScreenshotNSImage(progress.stitched)
+                    let img = ScreenshotNSImage(progress.stitched, scale: previewScale)
                     self.state.longShotPreview = img
                     self.state.longShotFrameCount = progress.step + 1
                     self.state.statusMessage = "已拼接 \(progress.step + 1) 帧 · 继续滚动或完成"
                     self.showLongPreview(img)
                 }
                 state.replacementCrop = result
-                state.annotations = []
                 let aspect = CGFloat(result.height) / CGFloat(max(result.width, 1))
                 var newSel = sel
                 newSel.size.height = min(
@@ -310,7 +320,9 @@ final class ScreenshotOverlayController: NSObject {
                     max(sel.height, sel.width * aspect)
                 )
                 state.selection = newSel
-                state.longShotPreview = ScreenshotNSImage(result)
+                state.captureScale = ScreenshotExport.scale(for: result, pointSize: newSel.size)
+                state.annotations = []
+                state.longShotPreview = ScreenshotNSImage(result, scale: state.captureScale ?? previewScale)
                 state.statusMessage = "长截图完成"
             } catch is CancellationError {
                 state.statusMessage = "已取消长截图"

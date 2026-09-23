@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 concurrency:
@@ -128,3 +128,30 @@ jobs:
             dist/build-info.txt
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish GitHub Release
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euxo pipefail
+          VERSION="$(awk -F '=' '
+            $1 ~ /^[[:space:]]*MARKETING_VERSION[[:space:]]*$/ {
+              value=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value); print value; exit
+            }
+          ' Config/Version.xcconfig)"
+          BUILD="$(awk -F '=' '
+            $1 ~ /^[[:space:]]*CURRENT_PROJECT_VERSION[[:space:]]*$/ {
+              value=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value); print value; exit
+            }
+          ' Config/Version.xcconfig)"
+          TAG="v${VERSION}"
+          mapfile -t ASSETS < <(find dist -maxdepth 1 -type f \( -name '*.dmg' -o -name '*.zip' \) | sort)
+          [[ "${#ASSETS[@]}" -gt 0 ]] || { echo "no release assets in dist/"; exit 1; }
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release delete "$TAG" --yes --cleanup-tag
+          fi
+          gh release create "$TAG" "${ASSETS[@]}" \
+            --title "BoringNotch-Next ${VERSION} (${BUILD})" \
+            --notes "Build ${BUILD}. Use in-app update, or install the DMG from this release." \
+            --latest

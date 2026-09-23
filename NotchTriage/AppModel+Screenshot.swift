@@ -83,8 +83,8 @@ extension AppModel {
             onEnded: { [weak self] in
                 self?.replaceIsCapturingScreenshot(false)
             },
-            onOCR: { [weak self] cgImage in
-                self?.runOCR(on: cgImage)
+            onOCR: { [weak self] cgImage, scale in
+                self?.runOCR(on: cgImage, scale: scale)
             }
         )
     }
@@ -97,9 +97,9 @@ extension AppModel {
         runOCR(on: cg, clipboardImage: image)
     }
 
-    func runOCR(on cgImage: CGImage) {
-        let scale = NSScreen.main?.backingScaleFactor ?? 2
-        let clipboardImage = ScreenshotExport.pasteboardImage(from: cgImage, scale: scale)
+    func runOCR(on cgImage: CGImage, scale: CGFloat? = nil) {
+        let resolved = scale ?? ScreenshotExport.scale(forDisplayID: nil)
+        let clipboardImage = ScreenshotExport.pasteboardImage(from: cgImage, scale: resolved)
         runOCR(on: cgImage, clipboardImage: clipboardImage)
     }
 

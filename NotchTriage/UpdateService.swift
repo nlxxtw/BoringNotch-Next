@@ -3,25 +3,15 @@ import Darwin
 import Foundation
 
 actor UpdateService {
-    private static let latestReleaseURL = URL(
-        string: "https://api.github.com/repos/nlxxtw/BoringNotch-Next/releases/latest"
-    )!
-    private static let expectedBundleIdentifier = "com.hyacinth.notchtriage"
+    /// Prefix proxy for GitHub traffic (check + download).
+    private static let acceleratorPrefix = "https://github.fuck123.de5.net/"
+    private static let releaseAPIPath = "/repos/nlxxtw/BoringNotch-Next/releases/latest"
     private static let trustedReleaseDownloadPath = "/nlxxtw/BoringNotch-Next/releases/download/"
+    private static let expectedBundleIdentifier = "com.hyacinth.notchtriage"
+    private static let updaterUserAgent = "BoringNotch-Next-Updater"
 
     func latestRelease() async throws -> AppRelease {
-        var request = URLRequest(url: Self.latestReleaseURL)
-        request.timeoutInterval = 20
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("BoringNotch-Next-Updater", forHTTPHeaderField: "User-Agent")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let response = response as? HTTPURLResponse,
-              response.statusCode == 200 else {
-            throw UpdateServiceError.invalidReleaseResponse
-        }
-
-        let payload = try JSONDecoder().decode(ReleasePayload.self, from: data)
+        let payload = try await fetchLatestReleasePayload()
         guard let asset = payload.assets.first(where: { asset in
             asset.name.localizedCaseInsensitiveContains("macOS-universal")
                 && asset.name.lowercased().hasSuffix(".dmg")
@@ -29,8 +19,7 @@ actor UpdateService {
             throw UpdateServiceError.missingInstaller
         }
 
-        guard asset.downloadURL.host?.lowercased() == "github.com",
-              asset.downloadURL.path.contains(Self.trustedReleaseDownloadPath) else {
+        guard isTrustedGitHubDownload(asset.downloadURL) else {
             throw UpdateServiceError.untrustedDownloadLocation
         }
 
@@ -40,7 +29,7 @@ actor UpdateService {
             title: payload.name ?? payload.tagName,
             notes: payload.body ?? "",
             releaseURL: payload.htmlURL,
-            downloadURL: asset.downloadURL,
+            downloadURL: Self.accelerated(asset.downloadURL),
             assetName: asset.name,
             assetSize: asset.size,
             digest: asset.digest
@@ -60,9 +49,10 @@ actor UpdateService {
             throw UpdateServiceError.missingDigest
         }
 
-        var request = URLRequest(url: release.downloadURL)
+        let downloadURL = Self.accelerated(release.downloadURL)
+        var request = URLRequest(url: downloadURL)
         request.timeoutInterval = 120
-        request.setValue("BoringNotch-Next-Updater", forHTTPHeaderField: "User-Agent")
+        request.setValue(Self.updaterUserAgent, forHTTPHeaderField: "User-Agent")
 
         let downloader = ProgressiveUpdateDownloader(
             request: request,
@@ -142,6 +132,49 @@ actor UpdateService {
         )
     }
 
+    private func fetchLatestReleasePayload() async throws -> ReleasePayload {
+        let candidates = [
+            Self.accelerated(URL(string: "https://api.github.com\(Self.releaseAPIPath)")!),
+            URL(string: "https://api.github.com\(Self.releaseAPIPath)")!
+        ]
+        var lastError: Error = UpdateServiceError.invalidReleaseResponse
+        for url in candidates {
+            do {
+                var request = URLRequest(url: url)
+                request.timeoutInterval = 20
+                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+                request.setValue(Self.updaterUserAgent, forHTTPHeaderField: "User-Agent")
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let response = response as? HTTPURLResponse,
+                      response.statusCode == 200 else {
+                    lastError = UpdateServiceError.invalidReleaseResponse
+                    continue
+                }
+                return try JSONDecoder().decode(ReleasePayload.self, from: data)
+            } catch {
+                lastError = error
+            }
+        }
+        throw lastError
+    }
+
+    private func isTrustedGitHubDownload(_ url: URL) -> Bool {
+        let host = url.host?.lowercased() ?? ""
+        guard host == "github.com" || host.hasSuffix(".github.com") else {
+            return false
+        }
+        return url.path.contains(Self.trustedReleaseDownloadPath)
+    }
+
+    /// Wrap a GitHub URL with the accelerator prefix (idempotent).
+    private static func accelerated(_ url: URL) -> URL {
+        let absolute = url.absoluteString
+        if absolute.hasPrefix(acceleratorPrefix) {
+            return url
+        }
+        return URL(string: acceleratorPrefix + absolute) ?? url
+    }
+
     private func mountDiskImage(at url: URL) throws -> URL {
         let result = try runProcess(
             executable: "/usr/bin/hdiutil",
@@ -213,9 +246,20 @@ actor UpdateService {
 
         let currentTeam = try teamIdentifier(for: currentAppURL)
         let updateTeam = try teamIdentifier(for: appURL)
-        guard !currentTeam.isEmpty, currentTeam == updateTeam else {
+        // Allow ad-hoc ↔ ad-hoc (CI builds) as well as matching Developer Teams.
+        let currentNormalized = normalizedTeam(currentTeam)
+        let updateNormalized = normalizedTeam(updateTeam)
+        guard currentNormalized == updateNormalized else {
             throw UpdateServiceError.signingTeamMismatch
         }
+    }
+
+    private func normalizedTeam(_ team: String) -> String {
+        let trimmed = team.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed.caseInsensitiveCompare("not set") == .orderedSame {
+            return "adhoc"
+        }
+        return trimmed
     }
 
     private func teamIdentifier(for appURL: URL) throws -> String {
@@ -229,15 +273,10 @@ actor UpdateService {
 
         let lines = result.errorText.split(separator: "\n")
         guard let line = lines.first(where: { $0.hasPrefix("TeamIdentifier=") }) else {
-            throw UpdateServiceError.missingSigningTeam
+            return "not set"
         }
-        let identifier = String(line.dropFirst("TeamIdentifier=".count))
+        return String(line.dropFirst("TeamIdentifier=".count))
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !identifier.isEmpty,
-              identifier.caseInsensitiveCompare("not set") != .orderedSame else {
-            throw UpdateServiceError.missingSigningTeam
-        }
-        return identifier
     }
 
     private func runProcess(
@@ -497,17 +536,17 @@ enum UpdateServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidReleaseResponse:
-            return "无法读取 GitHub 最新版本"
+            return "无法读取最新版本信息"
         case .missingInstaller:
-            return "最新 Release 中没有 macOS DMG 安装包"
+            return "最新版本中没有 macOS DMG 安装包"
         case .untrustedDownloadLocation:
-            return "安装包下载地址不属于 BoringNotch-Next 官方仓库"
+            return "安装包下载地址不可信，已停止安装"
         case .downloadFailed:
             return "安装包下载失败"
         case .missingDigest:
-            return "Release 没有可验证的 SHA-256 摘要，已停止安装"
+            return "更新包没有可验证的 SHA-256 摘要，已停止安装"
         case .downloadSizeMismatch:
-            return "安装包大小与 GitHub 记录不一致"
+            return "安装包大小与发布记录不一致"
         case .downloadDigestMismatch:
             return "安装包 SHA-256 校验失败"
         case .processTimedOut(let executable):
@@ -515,11 +554,11 @@ enum UpdateServiceError: LocalizedError {
         case .mountFailed(let detail):
             return "无法打开安装包：\(detail)"
         case .invalidInstaller:
-            return "DMG 中没有有效的 NotchTriage.app"
+            return "DMG 中没有有效的应用包"
         case .invalidBundleIdentifier:
             return "更新包的 Bundle ID 不匹配"
         case .versionMismatch:
-            return "更新包版本与 Release 标签不匹配"
+            return "更新包版本与发布标签不匹配"
         case .invalidSignature(let detail):
             return "更新包签名无效：\(detail)"
         case .missingSigningTeam:

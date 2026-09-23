@@ -32,7 +32,7 @@ final class ScreenshotSessionController {
         pinAfterCapture: Bool,
         onFeedback: @escaping (String?) -> Void,
         onEnded: @escaping () -> Void,
-        onOCR: @escaping (CGImage) -> Void
+        onOCR: @escaping (CGImage, CGFloat) -> Void
     ) {
         if isRunning {
             cancelIfRunning()
@@ -58,12 +58,8 @@ final class ScreenshotSessionController {
             self?.cancelIfRunning()
         }
         state.onCompleteCG = { [weak self] cgImage in
-            let scale: CGFloat
-            if let sel = self?.state?.selection {
-                scale = ScreenshotExport.scale(for: cgImage, pointSize: sel.size)
-            } else {
-                scale = NSScreen.main?.backingScaleFactor ?? 2
-            }
+            let scale = self?.state?.resolvedScale(for: cgImage)
+                ?? ScreenshotExport.scale(forDisplayID: self?.state?.selectionDisplayID)
             ScreenshotExport.writePasteboard(cgImage, scale: scale)
             let nsImage = ScreenshotExport.pasteboardImage(from: cgImage, scale: scale)
             if pinAfterCapture {
@@ -86,22 +82,24 @@ final class ScreenshotSessionController {
             feedback?(pinAfterCapture ? "已复制并贴图" : "已复制到剪贴板")
             ended?()
         }
-        state.onOCR = { image in
+        state.onOCR = { [weak self] image in
             guard let cg = ScreenshotOCRService.cgImage(from: image) else { return }
-            onOCR(cg)
+            let scale = self?.state?.resolvedScale(for: cg)
+                ?? ScreenshotExport.scale(forDisplayID: self?.state?.selectionDisplayID)
+            onOCR(cg, scale)
         }
-        state.onOCRCG = { onOCR($0) }
+        state.onOCRCG = { [weak self] cg in
+            let scale = self?.state?.resolvedScale(for: cg)
+                ?? ScreenshotExport.scale(forDisplayID: self?.state?.selectionDisplayID)
+            onOCR(cg, scale)
+        }
         state.onPin = { [weak self] image in
             ScreenshotPinController.shared.pin(image)
             self?.onFeedbackHandler?("已贴图")
         }
         state.onPinCG = { [weak self] cg in
-            let scale: CGFloat
-            if let sel = self?.state?.selection {
-                scale = ScreenshotExport.scale(for: cg, pointSize: sel.size)
-            } else {
-                scale = NSScreen.main?.backingScaleFactor ?? 2
-            }
+            let scale = self?.state?.resolvedScale(for: cg)
+                ?? ScreenshotExport.scale(forDisplayID: self?.state?.selectionDisplayID)
             ScreenshotPinController.shared.pin(cgImage: cg, scale: scale)
             self?.onFeedbackHandler?("已贴图")
         }
@@ -144,6 +142,8 @@ final class ScreenshotSessionController {
         }
         for o in overlays { o.present() }
         NSApp.activate(ignoringOtherApps: true)
+        // Key the overlay under the cursor so drag works without clicking the app first.
+        (overlays.first(where: \.containsGlobalMouse) ?? overlays.first)?.makeKey()
         installKeys(state: state)
         startFailsafe()
         onFeedback("在桌面上拖拽框选；可调大小；✕取消 ✓复制")

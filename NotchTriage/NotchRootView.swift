@@ -3,6 +3,7 @@ import SwiftUI
 
 struct NotchRootView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject var panelGeometry: NotchPanelGeometryModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pointerRegion = NotchPointerRegion.outside
     @State private var requestedCompactReveal: CompactWingReveal?
@@ -17,13 +18,20 @@ struct NotchRootView: View {
             collapsedBar
                 .frame(height: compactHeight)
 
-            if model.isExpanded || model.isPanelClosing {
+            if model.isExpanded || model.isWorkspaceClosing {
                 ExpandedPanelSurface(model: model)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // AppKit owns the panel's frame. Keep SwiftUI's proposed root size
+        // aligned with the controller's target to prevent NSHostingView from
+        // feeding changing ideal sizes back into the window during layout.
+        .frame(
+            width: panelGeometry.size.width,
+            height: panelGeometry.size.height,
+            alignment: .top
+        )
         .background {
-            if model.isExpanded || model.isPanelClosing {
+            if model.isExpanded || model.isWorkspaceClosing {
                 // Keep the expanded window's transparent gutters hit-testable
                 // so a click beside the glass surface can dismiss the panel.
                 Color.clear
@@ -2180,6 +2188,10 @@ private struct ExpandedPanelSurface: View {
             .nativeLiquidGlassSurface(
                 level: model.liquidGlassLevel,
                 cornerRadius: NotchDesign.Radius.panel,
+                contentSize: CGSize(
+                    width: NotchLayout.expandedPanelWidth,
+                    height: NotchLayout.expandedPanelHeight
+                ),
                 samplesDesktopBackdrop: true
             )
             .opacity(isVisible ? 1 : 0)
@@ -2280,9 +2292,6 @@ private struct ExpandedPanel: View {
                     release: release,
                     onInstall: {
                         model.installPresentedUpdate(release)
-                    },
-                    onDismiss: {
-                        model.dismissUpdatePrompt()
                     }
                 )
                 .transition(
@@ -2516,7 +2525,6 @@ private struct ExpandedPanel: View {
 private struct UpdateAvailableOverlay: View {
     let release: AppRelease
     let onInstall: () -> Void
-    let onDismiss: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -2526,18 +2534,19 @@ private struct UpdateAvailableOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.16)
+            Color.black.opacity(0.28)
                 .contentShape(Rectangle())
+                // Forced update: absorb clicks; no dismiss.
 
             VStack(alignment: .leading, spacing: 18) {
                 HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "arrow.down.app")
+                    Image(systemName: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90")
                         .font(.system(size: 23, weight: .medium))
                         .foregroundStyle(.tint)
                         .frame(width: 30, height: 30)
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("有新的版本可用")
+                        Text("需要更新后才能继续")
                             .font(.system(size: 17, weight: .semibold))
                         Text("BoringNotch-Next \(release.displayVersion)")
                             .font(.callout)
@@ -2564,25 +2573,19 @@ private struct UpdateAvailableOverlay: View {
                     }
                 }
 
-                Text("安装前会验证签名与完整性，完成后自动重启应用。")
+                Text("安装前会验证签名与完整性，完成后自动重启。此更新不可跳过。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack {
-                    Button("稍后") {
-                        onDismiss()
-                    }
-                    .buttonStyle(.bordered)
-                    .keyboardShortcut(.cancelAction)
-
-                    Spacer(minLength: 8)
-
-                    Button("安装并重启") {
+                    Spacer(minLength: 0)
+                    Button("立即更新并重启") {
                         onInstall()
                     }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
+                    .controlSize(.large)
                 }
             }
             .padding(22)

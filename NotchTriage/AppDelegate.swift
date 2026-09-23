@@ -95,6 +95,9 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
                 }
             )
         )
+        // Window minimum size is managed explicitly below, not by repeatedly
+        // measuring the scroll view as its settings content changes.
+        hostingView.sizingOptions = []
         settingsWindow.contentView = hostingView
         window = settingsWindow
         self.titleSink = titleSink
@@ -133,9 +136,24 @@ private final class InteractiveNotchPanel: NSPanel {
 }
 
 @MainActor
+final class NotchPanelGeometryModel: ObservableObject {
+    @Published private(set) var size: CGSize
+
+    init(size: CGSize) {
+        self.size = size
+    }
+
+    func update(size: CGSize) {
+        guard self.size != size else { return }
+        self.size = size
+    }
+}
+
+@MainActor
 final class NotchPanelController {
     private let model: AppModel
     private let panel: NSPanel
+    private let hostedPanelGeometry: NotchPanelGeometryModel
     private var cancellables = Set<AnyCancellable>()
     private var resizeRevision = 0
     private var scheduledResizeTask: Task<Void, Never>?
@@ -159,6 +177,14 @@ final class NotchPanelController {
             defer: false
         )
 
+        let hostedPanelGeometry = NotchPanelGeometryModel(
+            size: CGSize(
+                width: NotchLayout.panelWidth,
+                height: model.menuBarHeight
+            )
+        )
+        self.hostedPanelGeometry = hostedPanelGeometry
+
         panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.backgroundColor = .clear
@@ -169,7 +195,12 @@ final class NotchPanelController {
         panel.isReleasedWhenClosed = false
         panel.acceptsMouseMovedEvents = true
         panel.becomesKeyOnlyIfNeeded = false
-        let hostingView = NSHostingView(rootView: NotchRootView(model: model))
+        let hostingView = NSHostingView(
+            rootView: NotchRootView(
+                model: model,
+                panelGeometry: hostedPanelGeometry
+            )
+        )
         hostingView.sizingOptions = []
         panel.contentView = hostingView
 
@@ -313,8 +344,12 @@ final class NotchPanelController {
         )
         let notchWidth = resolvedNotchWidth(on: screen)
 
-        model.menuBarHeight = menuBarHeight
-        model.notchWidth = notchWidth
+        if model.menuBarHeight != menuBarHeight {
+            model.menuBarHeight = menuBarHeight
+        }
+        if model.notchWidth != notchWidth {
+            model.notchWidth = notchWidth
+        }
 
         let leftWingWidth = NotchLayout.compactWingWidth(
             for: model.leftWingContent,
@@ -351,6 +386,7 @@ final class NotchPanelController {
             lyricsShowsTransport: false
         )
         let frame = geometry.windowFrame
+        hostedPanelGeometry.update(size: frame.size)
         let expanded = state.isExpanded
         let hovering = state.isHoveringNotch || lyricsPeekActive
         let closing = state.isPanelClosing
@@ -364,7 +400,9 @@ final class NotchPanelController {
             resizeRevision += 1
             frameAnimationTimer?.invalidate()
             frameAnimationTimer = nil
-            panel.setFrame(frame, display: true)
+            if panel.frame != frame {
+                panel.setFrame(frame, display: true)
+            }
             panel.orderFrontRegardless()
             return
         }
@@ -373,7 +411,9 @@ final class NotchPanelController {
             resizeRevision += 1
             frameAnimationTimer?.invalidate()
             frameAnimationTimer = nil
-            panel.setFrame(frame, display: true)
+            if panel.frame != frame {
+                panel.setFrame(frame, display: true)
+            }
             panel.orderFrontRegardless()
             return
         }
@@ -386,7 +426,9 @@ final class NotchPanelController {
         frameAnimationTimer = nil
 
         guard shouldAnimate else {
-            panel.setFrame(frame, display: true)
+            if panel.frame != frame {
+                panel.setFrame(frame, display: true)
+            }
             panel.orderFrontRegardless()
             return
         }

@@ -767,7 +767,7 @@ struct SettingsRootView: View {
     private var updatesPage: some View {
         SettingsPage(
             title: "更新",
-            subtitle: "检查 GitHub Release，下载完成后验证并重启应用。",
+            subtitle: "检查新版本，下载完成后验证并重启应用。",
             symbol: "arrow.trianglehead.2.clockwise.rotate.90"
         ) {
             SettingsGroup(title: "当前版本") {
@@ -875,12 +875,6 @@ struct SettingsRootView: View {
                 Link(destination: URL(string: "https://bg.19492035.xyz/")!) {
                     Label("作者博客", systemImage: "globe")
                 }
-                Link(destination: URL(string: "https://github.com/nlxxtw/BoringNotch-Next")!) {
-                    Label("GitHub 仓库", systemImage: "chevron.left.forwardslash.chevron.right")
-                }
-                Link(destination: URL(string: "https://github.com/nlxxtw/BoringNotch-Next/releases")!) {
-                    Label("下载与更新", systemImage: "arrow.down.app")
-                }
             }
 
             SettingsGroup(title: "快捷操作") {
@@ -961,7 +955,7 @@ struct SettingsRootView: View {
     private var updateStatusDescription: String {
         switch model.updateStatus {
         case .idle: return model.localized("等待检查")
-        case .checking: return model.localized("正在检查 GitHub Release")
+        case .checking: return model.localized("正在检查更新")
         case .available(let version):
             return model.appLanguage == .english
                 ? "Found an installable version v\(version)"
@@ -1360,7 +1354,11 @@ private struct LiquidGlassStylePreview: View {
             }
             .padding(.horizontal, 16)
             .frame(width: 290, height: 58)
-            .nativeLiquidGlassSurface(level: level, cornerRadius: 19)
+            .nativeLiquidGlassSurface(
+                level: level,
+                cornerRadius: 19,
+                contentSize: CGSize(width: 290, height: 58)
+            )
         }
         .frame(height: 108)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))

@@ -187,19 +187,42 @@ enum ScreenshotDisplayCapture {
         selection: CGRect,
         viewSize: CGSize
     ) throws -> CGImage {
-        let sfX = CGFloat(image.width) / max(viewSize.width, 1)
-        let sfY = CGFloat(image.height) / max(viewSize.height, 1)
-        let pixel = CGRect(
-            x: floor(selection.minX * sfX),
-            y: floor(CGFloat(image.height) - selection.maxY * sfY),
-            width: max(1, floor(selection.width * sfX)),
-            height: max(1, floor(selection.height * sfY))
-        ).intersection(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let pixel = ScreenshotPixelMath.pixelRect(
+            viewRect: selection,
+            imageWidth: image.width,
+            imageHeight: image.height,
+            viewSize: viewSize
+        )
         guard pixel.width >= 1, pixel.height >= 1,
               let cropped = image.cropping(to: pixel) else {
             throw ScreenshotCaptureError.invalidCrop
         }
         return cropped
+    }
+}
+
+/// Shared view↔pixel mapping so capture crop and live mosaic stay aligned.
+enum ScreenshotPixelMath {
+    /// Flipped-view rect → Quartz (bottom-left) pixel rect.
+    /// Rounds each edge independently to avoid the systematic 1px drift of floor(width).
+    static func pixelRect(
+        viewRect: CGRect,
+        imageWidth: Int,
+        imageHeight: Int,
+        viewSize: CGSize
+    ) -> CGRect {
+        let sfX = CGFloat(imageWidth) / max(viewSize.width, 1)
+        let sfY = CGFloat(imageHeight) / max(viewSize.height, 1)
+        let x0 = (viewRect.minX * sfX).rounded(.toNearestOrAwayFromZero)
+        let x1 = (viewRect.maxX * sfX).rounded(.toNearestOrAwayFromZero)
+        let qBottom = (CGFloat(imageHeight) - viewRect.maxY * sfY).rounded(.toNearestOrAwayFromZero)
+        let qTop = (CGFloat(imageHeight) - viewRect.minY * sfY).rounded(.toNearestOrAwayFromZero)
+        return CGRect(
+            x: x0,
+            y: qBottom,
+            width: max(1, x1 - x0),
+            height: max(1, qTop - qBottom)
+        ).intersection(CGRect(x: 0, y: 0, width: imageWidth, height: imageHeight))
     }
 }
 
@@ -255,9 +278,42 @@ enum ScreenshotExport {
         return rep.representation(using: .png, properties: [:])
     }
 
+    /// Single export scale from captured pixels ÷ selection point size.
+    /// Snaps to 1×/2×/3× when close so pasteboard/pin metadata matches Retina.
     static func scale(for cg: CGImage, pointSize: CGSize) -> CGFloat {
-        let sx = CGFloat(cg.width) / max(pointSize.width, 1)
-        let sy = CGFloat(cg.height) / max(pointSize.height, 1)
-        return max(1, (sx + sy) / 2)
+        scale(pixelWidth: cg.width, pixelHeight: cg.height, pointSize: pointSize)
+    }
+
+    static func scale(pixelWidth: Int, pixelHeight: Int, pointSize: CGSize) -> CGFloat {
+        let sx = CGFloat(pixelWidth) / max(pointSize.width, 1)
+        let sy = CGFloat(pixelHeight) / max(pointSize.height, 1)
+        let raw: CGFloat
+        if abs(sx - sy) <= 0.05 {
+            raw = (sx + sy) / 2
+        } else {
+            // Mild anisotropy: geometric mean avoids one-axis "zoom" in point size.
+            raw = sqrt(max(sx, 0.01) * max(sy, 0.01))
+        }
+        return snapScale(raw)
+    }
+
+    /// Prefer the capture display — never assume `NSScreen.main` on multi-monitor.
+    static func scale(forDisplayID displayID: CGDirectDisplayID?) -> CGFloat {
+        if let displayID,
+           let screen = NSScreen.screens.first(where: { $0.displayID == displayID }) {
+            return max(1, screen.backingScaleFactor)
+        }
+        if let screen = NSScreen.screens.first(where: { $0.displayID == CGMainDisplayID() }) {
+            return max(1, screen.backingScaleFactor)
+        }
+        return max(1, NSScreen.main?.backingScaleFactor ?? 2)
+    }
+
+    static func snapScale(_ raw: CGFloat) -> CGFloat {
+        let candidates: [CGFloat] = [1, 2, 3]
+        if let match = candidates.first(where: { abs($0 - raw) < 0.12 }) {
+            return match
+        }
+        return max(1, raw)
     }
 }

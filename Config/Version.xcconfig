@@ -1,0 +1,3 @@
+// The single source of truth for BoringNotch-Next release metadata.
+MARKETING_VERSION = 26.9.23.0918
+CURRENT_PROJECT_VERSION = 232

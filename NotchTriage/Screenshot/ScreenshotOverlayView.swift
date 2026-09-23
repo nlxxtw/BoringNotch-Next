@@ -32,6 +32,7 @@ final class ScreenshotOverlayView: NSView, NSTextFieldDelegate {
         self.scaleFactor = scaleFactor
         super.init(frame: .zero)
         wantsLayer = true
+        layer?.contentsScale = scaleFactor
         layer?.backgroundColor = NSColor.clear.cgColor
     }
 
@@ -56,8 +57,7 @@ final class ScreenshotOverlayView: NSView, NSTextFieldDelegate {
 
             // Draw the captured Retina crop into the hole so export/preview match 1:1.
             if let crop = state?.replacementCrop {
-                let scale = ScreenshotExport.scale(for: crop, pointSize: sel.size)
-                drawCapturedCrop(crop, scale: scale, in: sel)
+                drawCapturedCrop(crop, in: sel)
             }
 
             ctx.setStrokeColor(NSColor.systemCyan.cgColor)
@@ -94,7 +94,7 @@ final class ScreenshotOverlayView: NSView, NSTextFieldDelegate {
         }
     }
 
-    private func drawCapturedCrop(_ crop: CGImage, scale: CGFloat, in sel: CGRect) {
+    private func drawCapturedCrop(_ crop: CGImage, in sel: CGRect) {
         // Draw CGImage directly — avoids NSImage resampling soft-blur on Retina.
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         ctx.saveGState()
@@ -105,7 +105,6 @@ final class ScreenshotOverlayView: NSView, NSTextFieldDelegate {
         ctx.scaleBy(x: 1, y: -1)
         ctx.draw(crop, in: CGRect(x: 0, y: 0, width: sel.width, height: sel.height))
         ctx.restoreGState()
-        _ = scale
     }
 
     private func drawAnnotations(in sel: CGRect, ctx: CGContext) {
@@ -211,14 +210,12 @@ final class ScreenshotOverlayView: NSView, NSTextFieldDelegate {
         dest: CGRect,
         ctx: CGContext
     ) {
-        let sx = CGFloat(crop.width) / max(selectionSize.width, 1)
-        let sy = CGFloat(crop.height) / max(selectionSize.height, 1)
-        let pixel = CGRect(
-            x: floor(localRect.minX * sx),
-            y: floor(CGFloat(crop.height) - localRect.maxY * sy),
-            width: max(1, floor(localRect.width * sx)),
-            height: max(1, floor(localRect.height * sy))
-        ).intersection(CGRect(x: 0, y: 0, width: crop.width, height: crop.height))
+        let pixel = ScreenshotPixelMath.pixelRect(
+            viewRect: localRect,
+            imageWidth: crop.width,
+            imageHeight: crop.height,
+            viewSize: selectionSize
+        )
         guard pixel.width > 1, pixel.height > 1,
               let piece = crop.cropping(to: pixel) else {
             ctx.setFillColor(NSColor.darkGray.withAlphaComponent(0.8).cgColor)

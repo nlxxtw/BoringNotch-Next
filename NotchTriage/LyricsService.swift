@@ -376,7 +376,7 @@ final class LyricsService {
         do {
             var request = URLRequest(url: url)
             request.setValue(
-                "BoringNotch-Next (https://github.com/nlxxtw/BoringNotch-Next)",
+                "BoringNotch-Next",
                 forHTTPHeaderField: "User-Agent"
             )
             request.timeoutInterval = requestTimeout

@@ -30,7 +30,17 @@ final class ScreenshotOverlayState: ObservableObject {
     @Published var statusMessage: String?
 
     var replacementCrop: CGImage?
+    /// Retina scale locked at capture time for the owning display — used by export/pin/OCR.
+    var captureScale: CGFloat?
     private var undoStack: [[ScreenshotAnnotation]] = []
+
+    func resolvedScale(for cg: CGImage) -> CGFloat {
+        if let captureScale, captureScale >= 1 { return captureScale }
+        if let sel = selection {
+            return ScreenshotExport.scale(for: cg, pointSize: sel.size)
+        }
+        return ScreenshotExport.scale(forDisplayID: selectionDisplayID)
+    }
 
     var imageProvider: (() -> NSImage?)?
     var cgImageProvider: (() -> CGImage?)?
@@ -150,12 +160,7 @@ struct ScreenshotToolbarView: View {
                 }
                 action("保存", "square.and.arrow.down") {
                     if let cg = state.cgImageProvider?() {
-                        let scale: CGFloat
-                        if let sel = state.selection {
-                            scale = ScreenshotExport.scale(for: cg, pointSize: sel.size)
-                        } else {
-                            scale = NSScreen.main?.backingScaleFactor ?? 2
-                        }
+                        let scale = state.resolvedScale(for: cg)
                         if let data = ScreenshotExport.pngData(cg, scale: scale) {
                             state.onSaveData?(data)
                         }
@@ -334,7 +339,7 @@ struct ScreenshotLongShotControlView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            Text("请在选区内手动滚动页面")
+            Text("请先点击选区内窗口再滚动")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.95))
             Text(state.longShotFrameCount <= 1
