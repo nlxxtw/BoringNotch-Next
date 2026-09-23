@@ -22,9 +22,9 @@ emit_real_errors() {
     | grep -Ev 'CODE_SIGN_(IDENTITY|STYLE|ING_)|OTHER_CODE_SIGN' \
     | head -n 50 \
     | while IFS= read -r line; do
-        printf '::error::%s\n' "$line"
+        printf -- '::error::%s\n' "$line"
       done || true
-  printf '----- last 100 log lines -----\n' >&2
+  printf -- '%s\n' '----- last 100 log lines -----' >&2
   tail -n 100 "$log_file" >&2 || true
 }
 

@@ -18,7 +18,7 @@ struct NotchRootView: View {
             collapsedBar
                 .frame(height: compactHeight)
 
-            if model.isExpanded || model.isWorkspaceClosing {
+            if model.isExpanded || model.isPanelClosing {
                 ExpandedPanelSurface(model: model)
             }
         }
@@ -31,7 +31,7 @@ struct NotchRootView: View {
             alignment: .top
         )
         .background {
-            if model.isExpanded || model.isWorkspaceClosing {
+            if model.isExpanded || model.isPanelClosing {
                 // Keep the expanded window's transparent gutters hit-testable
                 // so a click beside the glass surface can dismiss the panel.
                 Color.clear
